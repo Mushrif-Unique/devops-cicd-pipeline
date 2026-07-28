@@ -50,4 +50,22 @@ pipeline {
             }
         }
     }
+    post {
+
+        always {
+            echo 'Pipeline execution has finished.'
+        }
+
+        success {
+            echo 'Application deployed successfully.'
+        }
+
+        failure {
+            echo 'Pipeline failed. Please check the console output.'
+        }
+
+        cleanup {
+            cleanWs()
+        }
+    }
 }

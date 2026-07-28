@@ -2,6 +2,13 @@ pipeline {
 
     agent any
 
+    environment {
+        IMAGE_NAME = 'devops-app'
+        CONTAINER_NAME = 'devops-container'
+        HOST_PORT = '80'
+        CONTAINER_PORT = '80'
+    }
+
     stages {
 
         stage('Checkout') {
@@ -19,20 +26,20 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t devops-app .'
+                sh 'docker build -t ${IMAGE_NAME} .'
             }
         }
 
         stage('Run Container') {
             steps {
                 sh '''
-                docker stop devops-container || true
-                docker rm devops-container || true
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
 
                 docker run -d \
-                --name devops-container \
-                -p 80:80 \
-                devops-app
+                --name ${CONTAINER_NAME} \
+                -p ${HOST_PORT}:${CONTAINER_PORT} \
+                ${IMAGE_NAME}
                 '''
             }
         }

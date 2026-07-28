@@ -10,13 +10,18 @@ pipeline {
             }
         }
 
+        stage('Test') {
+            steps {
+                echo 'Running automated tests...'
+                sh 'bash scripts/test.sh'
+            }
+        }
 
         stage('Docker Build') {
             steps {
                 sh 'docker build -t devops-app .'
             }
         }
-
 
         stage('Run Container') {
             steps {
@@ -31,7 +36,6 @@ pipeline {
                 '''
             }
         }
-
 
         stage('Verify Deployment') {
             steps {

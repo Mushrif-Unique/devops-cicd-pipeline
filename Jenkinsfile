@@ -26,12 +26,14 @@ pipeline {
 
         stage('Docker Build') {
             steps {
+                echo 'Building Docker image...'
                 sh 'docker build -t ${IMAGE_NAME} .'
             }
         }
 
         stage('Run Container') {
             steps {
+                echo 'Deploying Docker container...'
                 sh '''
                 docker stop ${CONTAINER_NAME} || true
                 docker rm ${CONTAINER_NAME} || true
@@ -44,12 +46,28 @@ pipeline {
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Health Check') {
             steps {
-                sh 'docker ps'
+                echo 'Verifying application health...'
+                sh '''
+                sleep 5
+                curl -f http://localhost
+                echo "Application is running successfully."
+                '''
+            }
+        }
+
+        stage('Verify Docker') {
+            steps {
+                echo 'Displaying Docker information...'
+                sh '''
+                docker ps
+                docker images
+                '''
             }
         }
     }
+
     post {
 
         always {

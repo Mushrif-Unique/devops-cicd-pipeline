@@ -3,7 +3,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'devops-app'
+        DOCKER_IMAGE = 'nawasmushrif/devops-cicd-pipeline'
         CONTAINER_NAME = 'devops-container'
         HOST_PORT = '80'
         CONTAINER_PORT = '80'
@@ -27,7 +27,25 @@ pipeline {
         stage('Docker Build') {
             steps {
                 echo 'Building Docker image...'
-                sh 'docker build -t ${IMAGE_NAME} .'
+                sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    sh '''
+                    echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                    docker push ${DOCKER_IMAGE}:latest
+                    docker logout
+                    '''
+                }
             }
         }
 
@@ -41,7 +59,7 @@ pipeline {
                 docker run -d \
                 --name ${CONTAINER_NAME} \
                 -p ${HOST_PORT}:${CONTAINER_PORT} \
-                ${IMAGE_NAME}
+                ${DOCKER_IMAGE}:latest
                 '''
             }
         }
@@ -59,7 +77,6 @@ pipeline {
 
         stage('Verify Docker') {
             steps {
-                echo 'Displaying Docker information...'
                 sh '''
                 docker ps
                 docker images

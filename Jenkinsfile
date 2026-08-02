@@ -51,8 +51,11 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                echo 'Deploying Docker container...'
+                echo 'Deploying Docker image from Docker Hub...'
+
                 sh '''
+                docker pull ${DOCKER_IMAGE}:latest
+
                 docker stop ${CONTAINER_NAME} || true
                 docker rm ${CONTAINER_NAME} || true
 

@@ -2,12 +2,20 @@ pipeline {
 
     agent any
 
+    parameters {
+        string(
+            name: 'ROLLBACK_VERSION',
+            defaultValue: '',
+            description: 'Enter Docker image version to rollback to. Leave empty for normal deployment.'
+        )
+    }
+
     environment {
-    DOCKER_IMAGE = 'nawasmushrif/devops-cicd-pipeline'
-    IMAGE_TAG = "${BUILD_NUMBER}"
-    CONTAINER_NAME = 'devops-container'
-    HOST_PORT = '80'
-    CONTAINER_PORT = '80'
+        DOCKER_IMAGE = 'nawasmushrif/devops-cicd-pipeline'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        CONTAINER_NAME = 'devops-container'
+        HOST_PORT = '80'
+        CONTAINER_PORT = '80'
     }
 
     stages {
@@ -19,6 +27,12 @@ pipeline {
         }
 
         stage('Test') {
+            when {
+                expression {
+                    !params.ROLLBACK_VERSION?.trim()
+                }
+            }
+
             steps {
                 echo 'Running automated tests...'
                 sh 'bash scripts/test.sh'
@@ -26,19 +40,31 @@ pipeline {
         }
 
         stage('Docker Build') {
-            steps {
-            echo "Building Docker image version ${IMAGE_TAG}..."
+            when {
+                expression {
+                    !params.ROLLBACK_VERSION?.trim()
+                }
+            }
 
-            sh '''
-            docker build \
-            -t ${DOCKER_IMAGE}:${IMAGE_TAG} \
-            -t ${DOCKER_IMAGE}:latest \
-            .
-            '''
+            steps {
+                echo "Building Docker image version ${IMAGE_TAG}..."
+
+                sh '''
+                docker build \
+                -t ${DOCKER_IMAGE}:${IMAGE_TAG} \
+                -t ${DOCKER_IMAGE}:latest \
+                .
+                '''
             }
         }
 
         stage('Push to Docker Hub') {
+            when {
+                expression {
+                    !params.ROLLBACK_VERSION?.trim()
+                }
+            }
+
             steps {
 
                 withCredentials([
@@ -63,9 +89,16 @@ pipeline {
             }
         }
 
-        stage('Run Container') {
+        stage('Normal Deployment') {
+            when {
+                expression {
+                    !params.ROLLBACK_VERSION?.trim()
+                }
+            }
+
             steps {
-                echo 'Deploying Docker image from Docker Hub...'
+
+                echo "Deploying version ${IMAGE_TAG}..."
 
                 sh '''
                 docker pull ${DOCKER_IMAGE}:${IMAGE_TAG}
@@ -81,26 +114,6 @@ pipeline {
             }
         }
 
-        stage('Health Check') {
-            steps {
-                echo 'Verifying application health...'
-                sh '''
-                sleep 5
-                curl -f http://localhost
-                echo "Application is running successfully."
-                '''
-            }
-        }
-
-        stage('Verify Docker') {
-            steps {
-                sh '''
-                docker ps
-                docker images
-                '''
-            }
-        }
-
         stage('Rollback') {
             when {
                 expression {
@@ -109,6 +122,7 @@ pipeline {
             }
 
             steps {
+
                 echo "Rolling back to version ${params.ROLLBACK_VERSION}..."
 
                 sh '''
@@ -124,6 +138,29 @@ pipeline {
                 '''
             }
         }
+
+        stage('Health Check') {
+            steps {
+
+                sh '''
+                sleep 5
+
+                curl -f http://localhost
+
+                echo "Application is running successfully."
+                '''
+            }
+        }
+
+        stage('Verify Docker') {
+            steps {
+
+                sh '''
+                docker ps
+                docker images
+                '''
+            }
+        }
     }
 
     post {
@@ -133,7 +170,7 @@ pipeline {
         }
 
         success {
-            echo 'Application deployed successfully.'
+            echo 'Pipeline completed successfully.'
         }
 
         failure {

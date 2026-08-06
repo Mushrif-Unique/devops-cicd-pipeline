@@ -100,6 +100,30 @@ pipeline {
                 '''
             }
         }
+
+        stage('Rollback') {
+            when {
+                expression {
+                    params.ROLLBACK_VERSION?.trim()
+                }
+            }
+
+            steps {
+                echo "Rolling back to version ${params.ROLLBACK_VERSION}..."
+
+                sh '''
+                docker pull ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
+
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
+
+                docker run -d \
+                --name ${CONTAINER_NAME} \
+                -p ${HOST_PORT}:${CONTAINER_PORT} \
+                ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
+                '''
+            }
+        }
     }
 
     post {

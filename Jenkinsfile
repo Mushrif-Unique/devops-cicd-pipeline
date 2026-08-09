@@ -22,7 +22,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                echo 'Getting source code from GitHub'
+                echo 'Source code checked out from GitHub.'
             }
         }
 
@@ -50,10 +50,10 @@ pipeline {
                 echo "Building Docker image version ${IMAGE_TAG}..."
 
                 sh '''
-                docker build \
-                -t ${DOCKER_IMAGE}:${IMAGE_TAG} \
-                -t ${DOCKER_IMAGE}:latest \
-                .
+                    docker build \
+                    -t ${DOCKER_IMAGE}:${IMAGE_TAG} \
+                    -t ${DOCKER_IMAGE}:latest \
+                    .
                 '''
             }
         }
@@ -76,14 +76,14 @@ pipeline {
                 ]) {
 
                     sh '''
-                    echo "$DOCKER_PASSWORD" | docker login \
-                    -u "$DOCKER_USERNAME" \
-                    --password-stdin
+                        echo "$DOCKER_PASSWORD" | docker login \
+                        -u "$DOCKER_USERNAME" \
+                        --password-stdin
 
-                    docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
-                    docker push ${DOCKER_IMAGE}:latest
+                        docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
+                        docker push ${DOCKER_IMAGE}:latest
 
-                    docker logout
+                        docker logout
                     '''
                 }
             }
@@ -101,15 +101,33 @@ pipeline {
                 echo "Deploying version ${IMAGE_TAG}..."
 
                 sh '''
-                docker pull ${DOCKER_IMAGE}:${IMAGE_TAG}
+                    # Get the currently running Docker image
+                    CURRENT_IMAGE=$(docker inspect ${CONTAINER_NAME} \
+                    --format '{{.Config.Image}}' 2>/dev/null || true)
 
-                docker stop ${CONTAINER_NAME} || true
-                docker rm ${CONTAINER_NAME} || true
+                    # Save currently running version
+                    if [ -n "$CURRENT_IMAGE" ]; then
 
-                docker run -d \
-                --name ${CONTAINER_NAME} \
-                -p ${HOST_PORT}:${CONTAINER_PORT} \
-                ${DOCKER_IMAGE}:${IMAGE_TAG}
+                        CURRENT_VERSION=$(echo "$CURRENT_IMAGE" | awk -F: '{print $NF}')
+
+                        echo "$CURRENT_VERSION" | \
+                        sudo tee /var/lib/jenkins/previous_version > /dev/null
+
+                        echo "Previous version saved: $CURRENT_VERSION"
+                    fi
+
+                    # Pull new image
+                    docker pull ${DOCKER_IMAGE}:${IMAGE_TAG}
+
+                    # Stop and remove old container
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
+
+                    # Start new container
+                    docker run -d \
+                    --name ${CONTAINER_NAME} \
+                    -p ${HOST_PORT}:${CONTAINER_PORT} \
+                    ${DOCKER_IMAGE}:${IMAGE_TAG}
                 '''
             }
         }
@@ -126,15 +144,18 @@ pipeline {
                 echo "Rolling back to version ${params.ROLLBACK_VERSION}..."
 
                 sh '''
-                docker pull ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
+                    # Pull requested version
+                    docker pull ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
 
-                docker stop ${CONTAINER_NAME} || true
-                docker rm ${CONTAINER_NAME} || true
+                    # Stop and remove current container
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm ${CONTAINER_NAME} || true
 
-                docker run -d \
-                --name ${CONTAINER_NAME} \
-                -p ${HOST_PORT}:${CONTAINER_PORT} \
-                ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
+                    # Start requested version
+                    docker run -d \
+                    --name ${CONTAINER_NAME} \
+                    -p ${HOST_PORT}:${CONTAINER_PORT} \
+                    ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
                 '''
             }
         }
@@ -142,13 +163,63 @@ pipeline {
         stage('Health Check') {
             steps {
 
-                sh '''
-                sleep 5
+                script {
 
-                curl -f http://localhost
+                    def healthStatus = sh(
+                        script: '''
+                            sleep 5
+                            curl -f http://localhost:9999
+                        ''',
+                        returnStatus: true
+                    )
 
-                echo "Application is running successfully."
-                '''
+                    if (healthStatus != 0) {
+
+                        echo 'Health check failed. Starting automatic rollback...'
+
+                        sh '''
+                            if [ -f /var/lib/jenkins/previous_version ]; then
+
+                                PREVIOUS_VERSION=$(cat /var/lib/jenkins/previous_version)
+
+                                echo "Rolling back to version: $PREVIOUS_VERSION"
+
+                                # Pull previous working image
+                                docker pull ${DOCKER_IMAGE}:$PREVIOUS_VERSION
+
+                                # Stop and remove failed container
+                                docker stop ${CONTAINER_NAME} || true
+                                docker rm ${CONTAINER_NAME} || true
+
+                                # Start previous working version
+                                docker run -d \
+                                --name ${CONTAINER_NAME} \
+                                -p ${HOST_PORT}:${CONTAINER_PORT} \
+                                ${DOCKER_IMAGE}:$PREVIOUS_VERSION
+
+                                # Give application time to start
+                                sleep 5
+
+                                # Verify rollback
+                                curl -f http://localhost
+
+                                echo "Automatic rollback completed successfully."
+
+                            else
+
+                                echo "No previous version found. Cannot rollback."
+                                exit 1
+
+                            fi
+                        '''
+
+                        error(
+                            'New deployment failed health check. Previous version restored.'
+                        )
+                    }
+
+                    echo 'Application is running successfully.'
+                }
             }
         }
 
@@ -156,8 +227,11 @@ pipeline {
             steps {
 
                 sh '''
-                docker ps
-                docker images
+                    echo "Running containers:"
+                    docker ps
+
+                    echo "Available Docker images:"
+                    docker images
                 '''
             }
         }

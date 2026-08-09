@@ -168,7 +168,7 @@ pipeline {
                     def healthStatus = sh(
                         script: '''
                             sleep 5
-                            curl -f http://localhost:9999
+                            curl -f http://localhost
                         ''',
                         returnStatus: true
                     )

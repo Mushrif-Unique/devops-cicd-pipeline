@@ -2,6 +2,19 @@ pipeline {
 
     agent any
 
+    options {
+        buildDiscarder(
+            logRotator(
+                numToKeepStr: '10',
+                daysToKeepStr: '30'
+            )
+        )
+
+        timestamps()
+
+        timeout(time: 10, unit: 'MINUTES')
+    }
+
     parameters {
         string(
             name: 'ROLLBACK_VERSION',
@@ -20,9 +33,9 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        stage('Source Code') {
             steps {
-                echo 'Source code checked out from GitHub.'
+                echo 'Source code has been checked out from GitHub.'
             }
         }
 
@@ -101,11 +114,9 @@ pipeline {
                 echo "Deploying version ${IMAGE_TAG}..."
 
                 sh '''
-                    # Get the currently running Docker image
                     CURRENT_IMAGE=$(docker inspect ${CONTAINER_NAME} \
                     --format '{{.Config.Image}}' 2>/dev/null || true)
 
-                    # Save currently running version
                     if [ -n "$CURRENT_IMAGE" ]; then
 
                         CURRENT_VERSION=$(echo "$CURRENT_IMAGE" | awk -F: '{print $NF}')
@@ -116,14 +127,11 @@ pipeline {
                         echo "Previous version saved: $CURRENT_VERSION"
                     fi
 
-                    # Pull new image
                     docker pull ${DOCKER_IMAGE}:${IMAGE_TAG}
 
-                    # Stop and remove old container
                     docker stop ${CONTAINER_NAME} || true
                     docker rm ${CONTAINER_NAME} || true
 
-                    # Start new container
                     docker run -d \
                     --name ${CONTAINER_NAME} \
                     -p ${HOST_PORT}:${CONTAINER_PORT} \
@@ -144,14 +152,11 @@ pipeline {
                 echo "Rolling back to version ${params.ROLLBACK_VERSION}..."
 
                 sh '''
-                    # Pull requested version
                     docker pull ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
 
-                    # Stop and remove current container
                     docker stop ${CONTAINER_NAME} || true
                     docker rm ${CONTAINER_NAME} || true
 
-                    # Start requested version
                     docker run -d \
                     --name ${CONTAINER_NAME} \
                     -p ${HOST_PORT}:${CONTAINER_PORT} \
@@ -184,23 +189,18 @@ pipeline {
 
                                 echo "Rolling back to version: $PREVIOUS_VERSION"
 
-                                # Pull previous working image
                                 docker pull ${DOCKER_IMAGE}:$PREVIOUS_VERSION
 
-                                # Stop and remove failed container
                                 docker stop ${CONTAINER_NAME} || true
                                 docker rm ${CONTAINER_NAME} || true
 
-                                # Start previous working version
                                 docker run -d \
                                 --name ${CONTAINER_NAME} \
                                 -p ${HOST_PORT}:${CONTAINER_PORT} \
                                 ${DOCKER_IMAGE}:$PREVIOUS_VERSION
 
-                                # Give application time to start
                                 sleep 5
 
-                                # Verify rollback
                                 curl -f http://localhost
 
                                 echo "Automatic rollback completed successfully."
@@ -232,6 +232,64 @@ pipeline {
 
                     echo "Available Docker images:"
                     docker images
+                '''
+            }
+        }
+
+        stage('Application Monitoring') {
+            steps {
+
+                sh '''
+                    echo "===== Container Status ====="
+
+                    docker ps \
+                        --filter "name=${CONTAINER_NAME}"
+
+                    echo ""
+                    echo "===== Running Image ====="
+
+                    docker inspect ${CONTAINER_NAME} \
+                        --format '{{.Config.Image}}'
+
+                    echo ""
+                    echo "===== Application HTTP Status ====="
+
+                    HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost)
+
+                    echo "HTTP Status: $HTTP_STATUS"
+
+                    if [ "$HTTP_STATUS" != "200" ]; then
+                        echo "Application monitoring check failed."
+                        exit 1
+                    fi
+
+                    echo "Application monitoring check passed."
+                '''
+            }
+        }
+
+        stage('Container Logs') {
+            steps {
+
+                sh '''
+                    echo "===== Recent Container Logs ====="
+
+                    docker logs --tail 20 ${CONTAINER_NAME} || true
+                '''
+            }
+        }
+
+        stage('Docker Cleanup') {
+            steps {
+
+                sh '''
+                    echo "Cleaning unused Docker resources..."
+
+                    docker image prune -f
+
+                    echo "Docker disk usage after cleanup:"
+
+                    docker system df
                 '''
             }
         }

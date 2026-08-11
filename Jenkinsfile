@@ -13,6 +13,8 @@ pipeline {
         timestamps()
 
         timeout(time: 10, unit: 'MINUTES')
+
+        disableConcurrentBuilds()
     }
 
     parameters {
@@ -134,6 +136,9 @@ pipeline {
 
                     docker run -d \
                     --name ${CONTAINER_NAME} \
+                    --restart unless-stopped \
+                    --memory=256m \
+                    --cpus="0.50" \
                     -p ${HOST_PORT}:${CONTAINER_PORT} \
                     ${DOCKER_IMAGE}:${IMAGE_TAG}
                 '''
@@ -159,8 +164,35 @@ pipeline {
 
                     docker run -d \
                     --name ${CONTAINER_NAME} \
+                    --restart unless-stopped \
+                    --memory=256m \
+                    --cpus="0.50" \
                     -p ${HOST_PORT}:${CONTAINER_PORT} \
                     ${DOCKER_IMAGE}:${ROLLBACK_VERSION}
+                '''
+            }
+        }
+
+        stage('Deployment Info') {
+            steps {
+                sh '''
+                    echo "===== Deployment Information ====="
+
+                    echo "Container:"
+                    docker inspect ${CONTAINER_NAME} \
+                        --format '{{.Name}}'
+
+                    echo "Image:"
+                    docker inspect ${CONTAINER_NAME} \
+                        --format '{{.Config.Image}}'
+
+                    echo "Status:"
+                    docker inspect ${CONTAINER_NAME} \
+                        --format '{{.State.Status}}'
+
+                    echo "Started At:"
+                    docker inspect ${CONTAINER_NAME} \
+                        --format '{{.State.StartedAt}}'
                 '''
             }
         }
@@ -196,8 +228,11 @@ pipeline {
 
                                 docker run -d \
                                 --name ${CONTAINER_NAME} \
+                                --restart unless-stopped \
+                                --memory=256m \
+                                --cpus="0.50" \
                                 -p ${HOST_PORT}:${CONTAINER_PORT} \
-                                ${DOCKER_IMAGE}:$PREVIOUS_VERSION
+                                ${DOCKER_IMAGE}:${IMAGE_TAG}
 
                                 sleep 5
 

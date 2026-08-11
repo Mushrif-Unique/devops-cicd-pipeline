@@ -1,0 +1,9 @@
+.git
+.gitignore
+Jenkinsfile
+README.md
+scripts/
+*.log
+.env
+.env.*
+node_modules/

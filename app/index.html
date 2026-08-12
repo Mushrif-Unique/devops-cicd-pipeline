@@ -1,22 +1,486 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DevOps CI/CD Pipeline</title>
-</head>
-<body>
-    <h1>DevOps Pipeline Successfully Deployed!</h1>
-    <h1>DevOps Pipeline Version 2</h1>
-    <h2>Testing my Pipeline</h2>
-    <h3>Build Number 8</h3>
-    <p>Project by Mushrif</p>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <h2>Technologies Used</h2>
-    <ul>
-        <li>AWS EC2</li>
-        <li>Ubuntu</li>
-        <li>Docker</li>
-        <li>Jenkins</li>
-        <li>GitHub</li>
-    </ul>
+    <title>DevOps CI/CD Dashboard</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">⚙</div>
+
+            <div>
+                <h2>DevOps</h2>
+                <span>CI/CD Dashboard</span>
+            </div>
+        </div>
+
+        <nav>
+
+            <a href="#overview" class="nav-item active">
+                <span>▦</span>
+                Overview
+            </a>
+
+            <a href="#pipeline" class="nav-item">
+                <span>⚡</span>
+                Pipeline
+            </a>
+
+            <a href="#deployment" class="nav-item">
+                <span>🚀</span>
+                Deployment
+            </a>
+
+            <a href="#technology" class="nav-item">
+                <span>◈</span>
+                Technologies
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="environment">
+                <span class="status-dot"></span>
+
+                <div>
+                    <strong>Production</strong>
+                    <small>AWS EC2</small>
+                </div>
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Header -->
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">DEVOPS PROJECT</p>
+                <h1>CI/CD Deployment Dashboard</h1>
+                <p class="subtitle">
+                    Jenkins-powered automated deployment environment
+                </p>
+            </div>
+
+            <div class="live-status">
+                <span class="status-dot"></span>
+                LIVE
+            </div>
+
+        </header>
+
+
+        <!-- Overview -->
+        <section id="overview">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>System Overview</h2>
+                    <p>Current application and deployment status</p>
+                </div>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">⚡</div>
+
+                    <div>
+                        <span class="stat-label">Pipeline</span>
+                        <h3>SUCCESS</h3>
+                        <p>Jenkins CI/CD</p>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">✓</div>
+
+                    <div>
+                        <span class="stat-label">Application</span>
+                        <h3>RUNNING</h3>
+                        <p>Health check passed</p>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon purple">▣</div>
+
+                    <div>
+                        <span class="stat-label">Docker Version</span>
+                        <h3>#17</h3>
+                        <p>Current deployment</p>
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon orange">☁</div>
+
+                    <div>
+                        <span class="stat-label">Environment</span>
+                        <h3>AWS EC2</h3>
+                        <p>Ubuntu Server</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Pipeline -->
+        <section id="pipeline">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>CI/CD Pipeline</h2>
+                    <p>Automated application delivery workflow</p>
+                </div>
+
+                <span class="pipeline-badge">
+                    7 STAGES
+                </span>
+
+            </div>
+
+
+            <div class="pipeline-card">
+
+                <div class="pipeline-line"></div>
+
+
+                <!-- Stage 1 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Checkout</strong>
+                        <span>GitHub</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Stage 2 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Test</strong>
+                        <span>Automated Tests</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Stage 3 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Docker Build</strong>
+                        <span>Container Image</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Stage 4 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Push</strong>
+                        <span>Docker Hub</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Stage 5 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Deploy</strong>
+                        <span>AWS EC2</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Stage 6 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Health Check</strong>
+                        <span>Application</span>
+                    </div>
+
+                </div>
+
+
+                <!-- Stage 7 -->
+                <div class="pipeline-stage">
+
+                    <div class="stage-circle success">
+                        ✓
+                    </div>
+
+                    <div class="stage-content">
+                        <strong>Rollback</strong>
+                        <span>Recovery Ready</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Deployment -->
+        <section id="deployment">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>Deployment Details</h2>
+                    <p>Current containerized application environment</p>
+                </div>
+
+            </div>
+
+
+            <div class="deployment-grid">
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h3>Container Status</h3>
+
+                        <span class="online-badge">
+                            ● ONLINE
+                        </span>
+                    </div>
+
+
+                    <div class="details">
+
+                        <div class="detail-row">
+                            <span>Container</span>
+                            <strong>devops-container</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Image</span>
+                            <strong>devops-cicd-pipeline</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Version</span>
+                            <strong>#17</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Port</span>
+                            <strong>80 → 80</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Runtime</span>
+                            <strong>Docker + Nginx</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+                        <h3>Infrastructure</h3>
+
+                        <span class="online-badge">
+                            ● ACTIVE
+                        </span>
+                    </div>
+
+
+                    <div class="details">
+
+                        <div class="detail-row">
+                            <span>Cloud</span>
+                            <strong>AWS</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Service</span>
+                            <strong>EC2</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Operating System</span>
+                            <strong>Ubuntu</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>CI/CD Server</span>
+                            <strong>Jenkins</strong>
+                        </div>
+
+                        <div class="detail-row">
+                            <span>Application Port</span>
+                            <strong>80</strong>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Technology -->
+        <section id="technology">
+
+            <div class="section-title">
+
+                <div>
+                    <h2>Technology Stack</h2>
+                    <p>Tools used to build and automate this project</p>
+                </div>
+
+            </div>
+
+
+            <div class="tech-grid">
+
+                <div class="tech-card">
+                    <div class="tech-logo jenkins">J</div>
+                    <div>
+                        <strong>Jenkins</strong>
+                        <span>CI/CD Automation</span>
+                    </div>
+                </div>
+
+
+                <div class="tech-card">
+                    <div class="tech-logo docker">D</div>
+                    <div>
+                        <strong>Docker</strong>
+                        <span>Containerization</span>
+                    </div>
+                </div>
+
+
+                <div class="tech-card">
+                    <div class="tech-logo github">G</div>
+                    <div>
+                        <strong>GitHub</strong>
+                        <span>Source Control</span>
+                    </div>
+                </div>
+
+
+                <div class="tech-card">
+                    <div class="tech-logo aws">A</div>
+                    <div>
+                        <strong>AWS EC2</strong>
+                        <span>Cloud Infrastructure</span>
+                    </div>
+                </div>
+
+
+                <div class="tech-card">
+                    <div class="tech-logo hub">H</div>
+                    <div>
+                        <strong>Docker Hub</strong>
+                        <span>Image Registry</span>
+                    </div>
+                </div>
+
+
+                <div class="tech-card">
+                    <div class="tech-logo bash">$_</div>
+                    <div>
+                        <strong>Bash</strong>
+                        <span>Automation Scripts</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- Footer -->
+        <footer>
+
+            <div>
+                <strong>DevOps CI/CD Pipeline</strong>
+                <span>Automated deployment environment</span>
+            </div>
+
+            <div class="footer-status">
+                <span class="status-dot"></span>
+                System Operational
+            </div>
+
+        </footer>
+
+    </main>
+
 </body>
 </html>
